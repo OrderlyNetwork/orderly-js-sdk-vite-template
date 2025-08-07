@@ -18,7 +18,7 @@ npm install
 3. Run
 
 ```
-npm start
+npm run dev
 ```
 
 4. Build
