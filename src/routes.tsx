@@ -56,7 +56,7 @@ const AppRoute = () => {
       children: [
         {
           index: true,
-          element: <Navigate to={getSymbol()} />,
+          element: <Navigate to={`${getSymbol()}${window.location.search}`} />,
         },
         {
           path: ":symbol",
@@ -115,6 +115,11 @@ const AppRoute = () => {
       element: <TradingRewardsLayout />,
       children: [
         {
+          index: true,
+          // /rewards => /rewards/affiliate
+          element: <Navigate to={`affiliate${window.location.search}`} />,
+        },
+        {
           path: "trading",
           element: <TradingRewardsPage />,
         },
@@ -147,7 +152,7 @@ const AppRoute = () => {
           children: [
             {
               index: true,
-              element: <Navigate to="perp" />,
+              element: <Navigate to={`perp${window.location.search}`} />,
             },
             ...baseRoutes,
           ],
