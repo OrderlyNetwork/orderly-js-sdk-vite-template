@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { PortfolioLeftSidebarPath } from "@orderly.network/portfolio";
-import { RouteOption } from "@orderly.network/ui-scaffold";
+import { RouteOption } from "@orderly.network/types";
 import { PathEnum } from "../constant";
 import { getSymbol } from "../storage";
 import { generateLocalePath } from "../utils";
