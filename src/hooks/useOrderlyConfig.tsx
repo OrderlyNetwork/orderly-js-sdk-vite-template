@@ -43,11 +43,6 @@ export const useOrderlyConfig = () => {
               href: PathEnum.Rewards,
               children: [
                 {
-                  name: t("common.tradingRewards"),
-                  href: PathEnum.RewardsTrading,
-                  description: t("extend.tradingRewards.description"),
-                },
-                {
                   name: t("common.affiliate"),
                   href: PathEnum.RewardsAffiliate,
                   tag: t("extend.affiliate.tag"),

@@ -71,9 +71,7 @@ const MarketsPage = lazyImportPage(() => import("./pages/markets/page"));
 const LeaderboardPage = lazyImportPage(
   () => import("./pages/leaderboard/page"),
 );
-const TradingRewardsPage = lazyImportPage(
-  () => import("./pages/rewards/trading/page"),
-);
+
 const AffiliatePage = lazyImportPage(
   () => import("./pages/rewards/affiliate/page"),
 );
@@ -169,10 +167,6 @@ const AppRoute = () => {
           index: true,
           // /rewards => /rewards/affiliate
           element: <Navigate to={`affiliate${window.location.search}`} />,
-        },
-        {
-          path: "trading",
-          element: <TradingRewardsPage />,
         },
         {
           path: "affiliate",
