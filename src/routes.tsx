@@ -1,3 +1,4 @@
+import { ComponentType, lazy, Suspense } from "react";
 import {
   Navigate,
   createBrowserRouter,
@@ -9,30 +10,80 @@ import {
   i18n,
   parseI18nLang,
 } from "@orderly.network/i18n";
+import { Spinner } from "@orderly.network/ui";
 import { PortfolioLayout, TradingRewardsLayout } from "./components/layout";
 import { OrderlyProvider } from "./components/orderlyProvider";
 import { PathEnum } from "./constant";
-import LeaderboardPage from "./pages/leaderboard/page";
-import MarketsPage from "./pages/markets/page";
-import PerpPage from "./pages/perp/page";
-import APIKeyPage from "./pages/portfolio/api-key/page";
-import AssetsPage from "./pages/portfolio/assets/page";
-import FeeTierPage from "./pages/portfolio/fee/page";
-import HistoryPage from "./pages/portfolio/history/page";
-import OrdersPage from "./pages/portfolio/orders/page";
-import PortfolioPage from "./pages/portfolio/page";
-import PositionsPage from "./pages/portfolio/positions/page";
-import SettingsPage from "./pages/portfolio/setting/page";
-import AffiliatePage from "./pages/rewards/affiliate/page";
-import TradingRewardsPage from "./pages/rewards/trading/page";
 import { getSymbol } from "./storage";
+
+// Loading fallback component
+const PageLoading = () => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+      }}
+    >
+      <Spinner />
+    </div>
+  );
+};
+
+const lazyImportPage = (
+  importFn: () => Promise<{ default: ComponentType<Record<string, unknown>> }>,
+): ComponentType<Record<string, unknown>> => {
+  const LazyComponent = lazy(importFn);
+  const WrappedComponent = (props: Record<string, unknown>) => (
+    <Suspense fallback={<PageLoading />}>
+      <LazyComponent {...props} />
+    </Suspense>
+  );
+  return WrappedComponent;
+};
+
+const PerpPage = lazyImportPage(() => import("./pages/perp/page"));
+
+const PortfolioPage = lazyImportPage(() => import("./pages/portfolio/page"));
+const PositionsPage = lazyImportPage(
+  () => import("./pages/portfolio/positions/page"),
+);
+const OrdersPage = lazyImportPage(
+  () => import("./pages/portfolio/orders/page"),
+);
+const AssetsPage = lazyImportPage(
+  () => import("./pages/portfolio/assets/page"),
+);
+const FeeTierPage = lazyImportPage(() => import("./pages/portfolio/fee/page"));
+const APIKeyPage = lazyImportPage(
+  () => import("./pages/portfolio/api-key/page"),
+);
+const SettingsPage = lazyImportPage(
+  () => import("./pages/portfolio/setting/page"),
+);
+const HistoryPage = lazyImportPage(
+  () => import("./pages/portfolio/history/page"),
+);
+
+const MarketsPage = lazyImportPage(() => import("./pages/markets/page"));
+const LeaderboardPage = lazyImportPage(
+  () => import("./pages/leaderboard/page"),
+);
+const TradingRewardsPage = lazyImportPage(
+  () => import("./pages/rewards/trading/page"),
+);
+const AffiliatePage = lazyImportPage(
+  () => import("./pages/rewards/affiliate/page"),
+);
 
 const AppRoute = () => {
   // console.log("browser language", i18n?.language);
   let currentLocale = parseI18nLang(i18n?.language);
 
   const pathname = window.location.pathname;
-  let localePath = getLocalePathFromPathname(pathname);
+  const localePath = getLocalePathFromPathname(pathname);
 
   // TODO: use react router navigate instead of window.history.replaceState
   if (!localePath && pathname !== PathEnum.Root) {
