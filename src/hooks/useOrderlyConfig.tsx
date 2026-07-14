@@ -23,6 +23,50 @@ export type OrderlyConfig = {
   };
 };
 
+const APP_ICONS: AppLogos = {
+  main: {
+    component: (
+      <img
+        alt="Orderly logo"
+        src="/images/orderly-logo.svg"
+        style={{ width: 100, height: 40 }}
+      />
+    ),
+  },
+  secondary: {
+    img: "/images/orderly-logo-secondary.svg",
+  },
+};
+
+const RESTRICTED_INFO: RestrictedInfoOptions = {
+  enableDefault: true,
+  customRestrictedIps: [],
+  customRestrictedRegions: [],
+};
+
+const FOOTER_PROPS: FooterProps = {
+  telegramUrl: "https://orderly.network",
+  discordUrl: "https://discord.com/invite/orderlynetwork",
+  twitterUrl: "https://twitter.com/OrderlyNetwork",
+};
+
+const TRADING_VIEW_CONFIG = {} as TradingPageProps["tradingViewConfig"];
+
+const SHARE_PNL_CONFIG: TradingPageProps["sharePnLConfig"] = {
+  backgroundImages: [
+    "/images/pnl/poster_bg_1.png",
+    "/images/pnl/poster_bg_2.png",
+    "/images/pnl/poster_bg_3.png",
+    "/images/pnl/poster_bg_4.png",
+  ],
+  color: "rgba(255, 255, 255, 0.98)",
+  profitColor: "rgba(41, 223, 169, 1)",
+  lossColor: "rgba(245, 97, 139, 1)",
+  brandColor: "rgba(255, 255, 255, 0.98)",
+  refLink: "https://orderly.network",
+  refSlogan: "Orderly referral",
+};
+
 export const useOrderlyConfig = () => {
   const { t } = useTranslation();
 
@@ -61,56 +105,15 @@ export const useOrderlyConfig = () => {
           ],
           initialMenu: PathEnum.Root,
         },
-        footerProps: {
-          telegramUrl: "https://orderly.network",
-          discordUrl: "https://discord.com/invite/orderlynetwork",
-          twitterUrl: "https://twitter.com/OrderlyNetwork",
-        },
+        footerProps: FOOTER_PROPS,
       },
       orderlyAppProvider: {
-        appIcons: {
-          main: {
-            component: (
-              <img
-                alt="Orderly logo"
-                src="/images/orderly-logo.svg"
-                style={{ width: 100, height: 40 }}
-              />
-            ),
-          },
-          secondary: {
-            img: "/images/orderly-logo-secondary.svg",
-          },
-        },
-        restrictedInfo: {
-          enableDefault: true,
-          customRestrictedIps: [],
-          customRestrictedRegions: [],
-        },
+        appIcons: APP_ICONS,
+        restrictedInfo: RESTRICTED_INFO,
       },
       tradingPage: {
-        tradingViewConfig: {
-          // scriptSRC: "/tradingview/charting_library/charting_library.js",
-          // library_path: "/tradingview/charting_library/",
-          // customCssUrl: "/tradingview/chart.css",
-        },
-        sharePnLConfig: {
-          backgroundImages: [
-            "/images/pnl/poster_bg_1.png",
-            "/images/pnl/poster_bg_2.png",
-            "/images/pnl/poster_bg_3.png",
-            "/images/pnl/poster_bg_4.png",
-          ],
-
-          color: "rgba(255, 255, 255, 0.98)",
-          profitColor: "rgba(41, 223, 169, 1)",
-          lossColor: "rgba(245, 97, 139, 1)",
-          brandColor: "rgba(255, 255, 255, 0.98)",
-
-          // ref
-          refLink: "https://orderly.network",
-          refSlogan: "Orderly referral",
-        },
+        tradingViewConfig: TRADING_VIEW_CONFIG,
+        sharePnLConfig: SHARE_PNL_CONFIG,
       },
     };
   }, [t]);
