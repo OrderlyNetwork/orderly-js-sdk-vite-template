@@ -12,10 +12,16 @@ export function usePageTitle() {
 
   useEffect(() => {
     let title = PageTitleMap[path as keyof typeof PageTitleMap];
+    if (
+      path === PathEnum.Prediction ||
+      path.startsWith(`${PathEnum.Prediction}/`)
+    ) {
+      title = PageTitleMap[PathEnum.Prediction];
+    }
 
     const symbol = params.symbol;
     if (path.startsWith(PathEnum.Perp) && symbol) {
-      title = generatePageTitle(formatSymbol(symbol));
+      title = formatSymbol(symbol);
     }
 
     document.title = generatePageTitle(title);

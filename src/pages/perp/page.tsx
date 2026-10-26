@@ -1,39 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
-import { TradingPage, TradingPageProps } from "@orderly.network/trading";
-import { API } from "@orderly.network/types";
+import { useEffect } from "react";
+import { useParams } from "react-router";
+import { TradingPage } from "@orderly.network/trading";
 import { BaseLayout } from "../../components/layout";
-import { PathEnum } from "../../constant";
 import { useOrderlyConfig } from "../../hooks/useOrderlyConfig";
-import { updateSymbol } from "../../storage";
-import { generateLocalePath } from "../../utils";
-
-export type PerpViewProps = Pick<TradingPageProps, "symbol">;
+import { setPerpSymbol } from "../../perpSymbolStorage";
 
 export default function PerpPage() {
-  const params = useParams();
-  const [symbol, setSymbol] = useState(params.symbol!);
-  const navigate = useNavigate();
+  const { symbol } = useParams();
   const config = useOrderlyConfig();
 
   useEffect(() => {
-    updateSymbol(symbol);
+    if (symbol) setPerpSymbol(symbol);
   }, [symbol]);
 
-  const onSymbolChange = useCallback(
-    (data: API.Symbol) => {
-      const symbol = data.symbol;
-      setSymbol(symbol);
-      navigate(generateLocalePath(`${PathEnum.Perp}/${symbol}`));
-    },
-    [navigate],
-  );
+  if (!symbol) return null;
 
   return (
     <BaseLayout>
       <TradingPage
         symbol={symbol}
-        onSymbolChange={onSymbolChange}
         tradingViewConfig={config.tradingPage.tradingViewConfig}
         sharePnLConfig={config.tradingPage.sharePnLConfig}
       />

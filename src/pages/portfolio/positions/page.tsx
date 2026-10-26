@@ -1,27 +1,11 @@
-import { useCallback } from "react";
-import { useNavigate } from "react-router";
 import { PositionsModule } from "@orderly.network/portfolio";
 import { useTradingLocalStorage } from "@orderly.network/trading";
-import { API } from "@orderly.network/types";
 import { Box } from "@orderly.network/ui";
-import { PathEnum } from "../../../constant";
 import { useOrderlyConfig } from "../../../hooks/useOrderlyConfig";
-import { updateSymbol } from "../../../storage";
-import { generateLocalePath } from "../../../utils";
 
 export default function PositionsPage() {
-  const navigate = useNavigate();
   const local = useTradingLocalStorage();
   const config = useOrderlyConfig();
-
-  const onSymbolChange = useCallback(
-    (data: API.Symbol) => {
-      const symbol = data.symbol;
-      updateSymbol(symbol);
-      navigate(generateLocalePath(`${PathEnum.Perp}/${symbol}`));
-    },
-    [navigate],
-  );
 
   return (
     <Box
@@ -42,7 +26,6 @@ export default function PositionsPage() {
         sharePnLConfig={config.tradingPage.sharePnLConfig}
         pnlNotionalDecimalPrecision={local.pnlNotionalDecimalPrecision}
         calcMode={local.unPnlPriceBasis}
-        onSymbolChange={onSymbolChange}
       />
     </Box>
   );

@@ -1,13 +1,31 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import {
+  getLocalePathFromPathname,
+  i18n,
+  parseI18nLang,
+} from "@orderly.network/i18n";
+import { createAppRouter } from "./appRouter";
 import AppRoute from "./routes";
 import "./styles/index.css";
 
-const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement,
-);
-root.render(
-  <React.StrictMode>
-    <AppRoute />
-  </React.StrictMode>,
-);
+function bootstrap() {
+  const { pathname, search, hash } = window.location;
+  if (pathname !== "/" && !getLocalePathFromPathname(pathname)) {
+    const locale = parseI18nLang(i18n.language);
+    window.location.replace(`/${locale}${pathname}${search}${hash}`);
+    return;
+  }
+
+  const router = createAppRouter();
+  const root = ReactDOM.createRoot(
+    document.getElementById("root") as HTMLElement,
+  );
+  root.render(
+    <React.StrictMode>
+      <AppRoute router={router} />
+    </React.StrictMode>,
+  );
+}
+
+bootstrap();

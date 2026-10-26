@@ -6,11 +6,11 @@ import {
 } from "@orderly.network/portfolio";
 import { PathEnum } from "../../constant";
 import { useNav } from "../../hooks/useNav";
-import { useOrderlyConfig } from "../../hooks/useOrderlyConfig";
 import { usePathWithoutLang } from "../../hooks/usePathWithoutLang";
+import { useScaffoldConfig } from "../../hooks/useScaffoldConfig";
 
 export const PortfolioLayout = () => {
-  const config = useOrderlyConfig();
+  const config = useScaffoldConfig();
   const path = usePathWithoutLang();
 
   const { onRouteChange } = useNav();
@@ -26,9 +26,10 @@ export const PortfolioLayout = () => {
 
   return (
     <PortfolioLayoutWidget
-      footerProps={config.scaffold.footerProps}
+      footerProps={config.footerProps}
+      bottomNavProps={config.bottomNavProps}
       mainNavProps={{
-        ...config.scaffold.mainNavProps,
+        ...config.mainNavProps,
         initialMenu: PathEnum.Portfolio,
       }}
       routerAdapter={{

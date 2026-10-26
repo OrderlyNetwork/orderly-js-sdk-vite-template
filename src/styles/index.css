@@ -7,3 +7,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Keep the mobile sidebar from shrinking the padded logo asset to 18px. */
+img.orderly-app-logo {
+  height: 40px !important;
+}

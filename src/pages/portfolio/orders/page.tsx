@@ -1,7 +1,10 @@
 import { OrdersModule } from "@orderly.network/portfolio";
 import { Box } from "@orderly.network/ui";
+import { useOrderlyConfig } from "../../../hooks/useOrderlyConfig";
 
 export default function OrdersPage() {
+  const config = useOrderlyConfig();
+
   return (
     <Box
       p={6}
@@ -17,7 +20,9 @@ export default function OrdersPage() {
         height: "calc(100vh - 48px - 29px - 48px)",
       }}
     >
-      <OrdersModule.OrdersPage />
+      <OrdersModule.OrdersPage
+        sharePnLConfig={config.tradingPage.sharePnLConfig}
+      />
     </Box>
   );
 }
