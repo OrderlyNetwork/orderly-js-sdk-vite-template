@@ -76,137 +76,129 @@ const AffiliatePage = lazyImportPage(
   () => import("./pages/rewards/affiliate/page"),
 );
 
-const AppRoute = () => {
-  // console.log("browser language", i18n?.language);
-  let currentLocale = parseI18nLang(i18n?.language);
+const currentLocale =
+  getLocalePathFromPathname(window.location.pathname) ??
+  parseI18nLang(i18n.language);
 
-  const pathname = window.location.pathname;
-  const localePath = getLocalePathFromPathname(pathname);
+if (
+  !getLocalePathFromPathname(window.location.pathname) &&
+  window.location.pathname !== PathEnum.Root
+) {
+  const { pathname, search, hash } = window.location;
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `/${currentLocale}${pathname}${search}${hash}`,
+  );
+}
 
-  // TODO: use react router navigate instead of window.history.replaceState
-  if (!localePath && pathname !== PathEnum.Root) {
-    // redirect to the current locale path
-    // /perp/PERP_ETH_USDC => /en/perp/PERP_ETH_USDC
-    const redirectPath = `/${currentLocale}${pathname}`;
-    window.history.replaceState({}, "", redirectPath);
-    return;
-  }
+const baseRoutes: RouteObject[] = [
+  {
+    path: "perp",
+    children: [
+      {
+        index: true,
+        element: <Navigate to={`${getSymbol()}${window.location.search}`} />,
+      },
+      {
+        path: ":symbol",
+        element: <PerpPage />,
+      },
+    ],
+  },
+  {
+    path: "portfolio",
+    element: <PortfolioLayout />,
+    children: [
+      {
+        index: true,
+        element: <PortfolioPage />,
+      },
+      {
+        path: "positions",
+        element: <PositionsPage />,
+      },
+      {
+        path: "orders",
+        element: <OrdersPage />,
+      },
+      {
+        path: "assets",
+        element: <AssetsPage />,
+      },
+      {
+        path: "fee",
+        element: <FeeTierPage />,
+      },
+      {
+        path: "api-key",
+        element: <APIKeyPage />,
+      },
+      {
+        path: "setting",
+        element: <SettingsPage />,
+      },
+      {
+        path: "history",
+        element: <HistoryPage />,
+      },
+    ],
+  },
+  {
+    path: "markets",
+    element: <MarketsPage />,
+  },
+  {
+    path: "leaderboard",
+    element: <LeaderboardPage />,
+  },
+  {
+    path: "rewards",
+    element: <TradingRewardsLayout />,
+    children: [
+      {
+        index: true,
+        // /rewards => /rewards/affiliate
+        element: <Navigate to={`affiliate${window.location.search}`} />,
+      },
+      {
+        path: "affiliate",
+        element: <AffiliatePage />,
+      },
+    ],
+  },
+];
 
-  if (localePath && localePath !== currentLocale) {
-    currentLocale = localePath;
-    i18n.changeLanguage(localePath);
-  } else if (currentLocale !== i18n?.language) {
-    i18n.changeLanguage(currentLocale);
-  }
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <OrderlyProvider />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Navigate
+            // preserve the search parameters to ensure link device via url params works
+            to={`/${currentLocale}${PathEnum.Perp}/${getSymbol()}${
+              window.location.search
+            }`}
+          />
+        ),
+      },
+      {
+        path: ":lang",
+        children: [
+          {
+            index: true,
+            element: <Navigate to={`perp${window.location.search}`} />,
+          },
+          ...baseRoutes,
+        ],
+      },
+    ],
+  },
+]);
 
-  const baseRoutes: RouteObject[] = [
-    {
-      path: "perp",
-      children: [
-        {
-          index: true,
-          element: <Navigate to={`${getSymbol()}${window.location.search}`} />,
-        },
-        {
-          path: ":symbol",
-          element: <PerpPage />,
-        },
-      ],
-    },
-    {
-      path: "portfolio",
-      element: <PortfolioLayout />,
-      children: [
-        {
-          index: true,
-          element: <PortfolioPage />,
-        },
-        {
-          path: "positions",
-          element: <PositionsPage />,
-        },
-        {
-          path: "orders",
-          element: <OrdersPage />,
-        },
-        {
-          path: "assets",
-          element: <AssetsPage />,
-        },
-        {
-          path: "fee",
-          element: <FeeTierPage />,
-        },
-        {
-          path: "api-key",
-          element: <APIKeyPage />,
-        },
-        {
-          path: "setting",
-          element: <SettingsPage />,
-        },
-        {
-          path: "history",
-          element: <HistoryPage />,
-        },
-      ],
-    },
-    {
-      path: "markets",
-      element: <MarketsPage />,
-    },
-    {
-      path: "leaderboard",
-      element: <LeaderboardPage />,
-    },
-    {
-      path: "rewards",
-      element: <TradingRewardsLayout />,
-      children: [
-        {
-          index: true,
-          // /rewards => /rewards/affiliate
-          element: <Navigate to={`affiliate${window.location.search}`} />,
-        },
-        {
-          path: "affiliate",
-          element: <AffiliatePage />,
-        },
-      ],
-    },
-  ];
-
-  const router = createBrowserRouter([
-    {
-      path: "/",
-      element: <OrderlyProvider />,
-      children: [
-        {
-          index: true,
-          element: (
-            <Navigate
-              // preserve the search parameters to ensure link device via url params works
-              to={`/${currentLocale}${PathEnum.Perp}/${getSymbol()}${
-                window.location.search
-              }`}
-            />
-          ),
-        },
-        {
-          path: ":lang",
-          children: [
-            {
-              index: true,
-              element: <Navigate to={`perp${window.location.search}`} />,
-            },
-            ...baseRoutes,
-          ],
-        },
-      ],
-    },
-  ]);
-
-  return <RouterProvider router={router} />;
-};
+const AppRoute = () => <RouterProvider router={router} />;
 
 export default AppRoute;
