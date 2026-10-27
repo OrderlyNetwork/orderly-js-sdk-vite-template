@@ -4,6 +4,7 @@ import { generatePath, getLocalePathFromPathname } from "@orderly.network/i18n";
 import { PortfolioLeftSidebarPath } from "@orderly.network/portfolio";
 import { perpRoute, type RouteOption } from "@orderly.network/types";
 import { PathEnum } from "../constant";
+import { migratePredictionPath } from "../navigationPaths";
 import { getPerpSymbol } from "../perpSymbolStorage";
 
 export function useNav() {
@@ -38,7 +39,7 @@ export function useNav() {
       const path =
         pathname === "/"
           ? perpRoute(getPerpSymbol()).href
-          : routeMap[pathname] || pathname;
+          : migratePredictionPath(routeMap[pathname] || pathname);
       const href = generatePath({
         path,
         locale:

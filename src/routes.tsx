@@ -3,6 +3,7 @@ import { generatePath, getLocalePathFromPathname } from "@orderly.network/i18n";
 import { perpRoute } from "@orderly.network/types";
 import { Spinner } from "@orderly.network/ui";
 import type { createAppRouter } from "./appRouter";
+import { migratePredictionPath } from "./navigationPaths";
 import { getPerpSymbol } from "./perpSymbolStorage";
 
 export const PageLoading = () => {
@@ -19,6 +20,16 @@ export const PageLoading = () => {
     </div>
   );
 };
+
+export function LegacyPredictionRedirect() {
+  const { pathname, search, hash } = useLocation();
+  return (
+    <Navigate
+      to={`${migratePredictionPath(pathname)}${search}${hash}`}
+      replace
+    />
+  );
+}
 
 export function PerpsRedirect() {
   const { pathname, search, hash } = useLocation();

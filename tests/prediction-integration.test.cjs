@@ -33,6 +33,7 @@ const navigations = [];
 const opened = [];
 const constants = loadSource("src/constant.ts");
 const storage = loadSource("src/perpSymbolStorage.ts");
+const navigationPaths = loadSource("src/navigationPaths.ts");
 const nav = loadSource("src/hooks/useNav.ts", {
   react: { useCallback: (fn) => fn },
   "react-router": {
@@ -46,6 +47,7 @@ const nav = loadSource("src/hooks/useNav.ts", {
     },
   },
   "../constant": constants,
+  "../navigationPaths": navigationPaths,
   "../perpSymbolStorage": storage,
 });
 
@@ -60,7 +62,7 @@ beforeEach(() => {
   };
   global.window = {
     location: {
-      pathname: "/zh/prediction",
+      pathname: "/zh/predict",
       search: "?ref=demo",
       hash: "#account",
     },
@@ -82,7 +84,7 @@ test("round navigation preserves URL locale, query, hash and replace", () => {
   );
   assert.deepEqual(navigations, [
     {
-      href: "/zh/prediction/PERP_BTC5M2610261055_USDC?ref=demo#account",
+      href: "/zh/predict/PERP_BTC5M2610261055_USDC?ref=demo#account",
       replace: true,
     },
   ]);
@@ -91,8 +93,8 @@ test("round navigation preserves URL locale, query, hash and replace", () => {
 test("destination query and hash replace independently, even with ? inside the hash", () => {
   navigate({ href: "/prediction?market=btc" });
   navigate({ href: "/prediction#round?details" });
-  assert.equal(navigations[0].href, "/zh/prediction?market=btc#account");
-  assert.equal(navigations[1].href, "/zh/prediction?ref=demo#round?details");
+  assert.equal(navigations[0].href, "/zh/predict?market=btc#account");
+  assert.equal(navigations[1].href, "/zh/predict?ref=demo#round?details");
 });
 
 test("explicit empty query and hash clear inherited values", () => {
@@ -111,7 +113,7 @@ test("Portfolio aliases also work when a destination has query and hash", () => 
 
 test("already localized destinations receive only one locale prefix", () => {
   navigate({ href: "/en/prediction" });
-  assert.equal(navigations[0].href, "/en/prediction?ref=demo#account");
+  assert.equal(navigations[0].href, "/en/predict?ref=demo#account");
 });
 
 test("external links preserve their destination without router navigation", () => {
@@ -167,6 +169,7 @@ test("all Perps entry redirects read current location and preference at render t
     },
     "@orderly.network/ui": { Spinner: () => null },
     "./perpSymbolStorage": storage,
+    "./navigationPaths": navigationPaths,
   });
   const routerModule = loadSource("src/appRouter.tsx", {
     "./routes": routeComponents,
@@ -183,6 +186,7 @@ test("all Perps entry redirects read current location and preference at render t
     },
     "./components/orderlyProvider": { OrderlyProvider: () => null },
     "./perpSymbolStorage": storage,
+    "./navigationPaths": navigationPaths,
   });
   const tree = routerModule.createAppRouter();
   const redirects = [
@@ -279,6 +283,7 @@ test("bootstrap redirects unlocalized URLs before creating or mounting a router"
     },
     "./routes": { default: () => null },
     "./perpSymbolStorage": storage,
+    "./navigationPaths": navigationPaths,
     "./styles/index.css": {},
   };
   global.window.location = {
@@ -290,7 +295,7 @@ test("bootstrap redirects unlocalized URLs before creating or mounting a router"
   loadSource("src/index.tsx", mocks);
   const locale = i18n.parseI18nLang(i18n.i18n.language);
   assert.deepEqual(redirects, [
-    `/${locale}/prediction/PERP_BTC5M2610261005_USDC?ref=demo#account`,
+    `/${locale}/predict/PERP_BTC5M2610261005_USDC?ref=demo#account`,
   ]);
   assert.equal(created, 0);
   assert.equal(renders.length, 0);
@@ -340,7 +345,7 @@ test("mobile navigation retains existing destinations and hides Prediction only 
       leftNav: {
         menus: [
           { href: "/", name: "Trade" },
-          { href: "/prediction", name: "Predictions" },
+          { href: "/predict", name: "Predict" },
           { href: "/portfolio", name: "Portfolio" },
           { href: "/markets", name: "Markets" },
         ],
@@ -365,7 +370,7 @@ test("mobile navigation retains existing destinations and hides Prediction only 
   }).useScaffoldConfig;
   assert.equal(
     config().mainNavProps.leftNav.menus.filter(
-      (item) => item.href === "/prediction",
+      (item) => item.href === "/predict",
     ).length,
     1,
   );
@@ -401,11 +406,11 @@ test("page titles append the brand once across Perps, Prediction and Portfolio",
     for (const [nextPath, nextSymbol, expected] of [
       ["/perp/PERP_ETH_USDC", "PERP_ETH_USDC", "ETH-PERP | Orderly"],
       ["/perp/PERP_BTC_USDC", "PERP_BTC_USDC", "BTC-PERP | Orderly"],
-      ["/prediction", undefined, "Prediction | Orderly"],
+      ["/predict", undefined, "Predict | Orderly"],
       [
-        "/prediction/PERP_BTC5M2610261055_USDC",
+        "/predict/PERP_BTC5M2610261055_USDC",
         "PERP_BTC5M2610261055_USDC",
-        "Prediction | Orderly",
+        "Predict | Orderly",
       ],
       ["/portfolio/positions", undefined, "Positions | Orderly"],
     ]) {
@@ -420,36 +425,65 @@ test("page titles append the brand once across Perps, Prediction and Portfolio",
   }
 });
 
-test("Trade menu immediately forwards decoded route params and SDK product keys", () => {
+test("Trade menu uses canonical paths and only forwards Perps symbols after mounting", () => {
+  const React = require("react");
+  const { act, create } = require("react-test-renderer");
   let path;
-  let symbol;
+  const Widget = () => null;
   const menu = loadSource("src/components/layout/customTradeSubMenu.tsx", {
-    "react-router": { useParams: () => ({ symbol }) },
-    "@orderly.network/markets": {
-      PERPS_TRADE_SUB_MENU_KEY: "perps",
-      PREDICTION_TRADE_SUB_MENU_KEY: "prediction",
-      TradeSubMenuWidget: () => null,
-    },
+    "@orderly.network/markets": { TradeSubMenuWidget: Widget },
     "../../constant": constants,
     "../../hooks/usePathWithoutLang": { usePathWithoutLang: () => path },
-    "../../perpSymbolStorage": storage,
   }).default;
-  for (const [nextPath, nextSymbol, activeKey] of [
+  for (const [nextPath, expectedSymbol, activeKey] of [
     ["/perp/PERP_BTC_USDC", "PERP_BTC_USDC", "perps"],
-    ["/prediction", undefined, "prediction"],
-    [
-      "/prediction/PERP_BTC5M2610261055_USDC",
-      "PERP_BTC5M2610261055_USDC",
-      "prediction",
-    ],
+    ["/predict", undefined, "prediction"],
+    ["/predict/PERP_BTC5M2610261055_USDC", undefined, "prediction"],
     ["/markets", undefined, "perps"],
-    ["/predictions", undefined, "perps"],
+    ["/predictish", undefined, "perps"],
   ]) {
     path = nextPath;
-    symbol = nextSymbol;
-    const result = menu();
-    assert.equal(result.props.symbol, nextSymbol);
-    assert.equal(result.props.activeKey, activeKey);
-    assert.equal(result.props.defaultSymbol, storage.DEFAULT_SYMBOL);
+    let root;
+    act(() => {
+      root = create(React.createElement(menu));
+    });
+    const props = root.root.findByType(Widget).props;
+    assert.equal(props.symbol, expectedSymbol);
+    assert.equal(props.activeKey, activeKey);
+    act(() => root.unmount());
   }
+});
+
+test("legacy redirect preserves encoded paths and URL suffixes using replacement", () => {
+  const routes = loadSource("src/routes.tsx", {
+    "react-router": {
+      Navigate: () => null,
+      RouterProvider: () => null,
+      useLocation: () => ({
+        pathname: "/zh/prediction/BTC%2F5M%25",
+        search: "?ref=demo",
+        hash: "#orders",
+      }),
+    },
+    "@orderly.network/ui": { Spinner: () => null },
+    "./perpSymbolStorage": storage,
+    "./navigationPaths": navigationPaths,
+  });
+  const result = routes.LegacyPredictionRedirect();
+  assert.equal(result.props.to, "/zh/predict/BTC%2F5M%25?ref=demo#orders");
+  assert.equal(result.props.replace, true);
+});
+
+test("legacy migration does not rewrite unrelated path segments", () => {
+  for (const path of [
+    "/predictionish",
+    "/portfolio/prediction",
+    "/predict/BTC",
+  ]) {
+    assert.equal(navigationPaths.migratePredictionPath(path), path);
+  }
+  assert.equal(
+    navigationPaths.migratePredictionPath("/prediction/BTC%2F5M%25?x=1#orders"),
+    "/predict/BTC%2F5M%25?x=1#orders",
+  );
 });

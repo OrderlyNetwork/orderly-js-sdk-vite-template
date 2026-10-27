@@ -2,7 +2,12 @@ import { ComponentType, lazy, Suspense } from "react";
 import { createBrowserRouter, type RouteObject } from "react-router";
 import { PortfolioLayout, TradingRewardsLayout } from "./components/layout";
 import { OrderlyProvider } from "./components/orderlyProvider";
-import { PageLoading, PerpsRedirect, AffiliateRedirect } from "./routes";
+import {
+  PageLoading,
+  PerpsRedirect,
+  AffiliateRedirect,
+  LegacyPredictionRedirect,
+} from "./routes";
 
 const lazyImportPage = (
   importFn: () => Promise<{ default: ComponentType<Record<string, unknown>> }>,
@@ -65,6 +70,10 @@ export const baseRoutes: RouteObject[] = [
   },
   {
     path: "prediction/:symbol?",
+    element: <LegacyPredictionRedirect />,
+  },
+  {
+    path: "predict/:symbol?",
     element: <PredictionPage />,
   },
   {

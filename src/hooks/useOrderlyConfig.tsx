@@ -138,7 +138,7 @@ export const useOrderlyConfig = () => {
                 icon: <TradingIcon />,
               },
               {
-                name: t("common.predictions"),
+                name: t("common.predict"),
                 href: PathEnum.Prediction,
                 icon: <PredictionIcon size={20} monochrome />,
               },

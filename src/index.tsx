@@ -6,6 +6,7 @@ import {
   parseI18nLang,
 } from "@orderly.network/i18n";
 import { createAppRouter } from "./appRouter";
+import { migratePredictionPath } from "./navigationPaths";
 import AppRoute from "./routes";
 import "./styles/index.css";
 
@@ -13,7 +14,9 @@ function bootstrap() {
   const { pathname, search, hash } = window.location;
   if (pathname !== "/" && !getLocalePathFromPathname(pathname)) {
     const locale = parseI18nLang(i18n.language);
-    window.location.replace(`/${locale}${pathname}${search}${hash}`);
+    window.location.replace(
+      `/${locale}${migratePredictionPath(pathname)}${search}${hash}`,
+    );
     return;
   }
 
