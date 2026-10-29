@@ -19,6 +19,13 @@ export function usePageTitle() {
       title = PageTitleMap[PathEnum.Prediction];
     }
 
+    if (
+      path === PathEnum.Announcement ||
+      path.startsWith(`${PathEnum.Announcement}/`)
+    ) {
+      title = PageTitleMap[PathEnum.Announcement];
+    }
+
     const symbol = params.symbol;
     if (path.startsWith(PathEnum.Perp) && symbol) {
       title = formatSymbol(symbol);

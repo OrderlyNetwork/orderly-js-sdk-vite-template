@@ -21,6 +21,10 @@ const lazyImportPage = (
   return WrappedComponent;
 };
 
+const AnnouncementPage = lazyImportPage(
+  () => import("./pages/announcement/page"),
+);
+
 const PerpPage = lazyImportPage(() => import("./pages/perp/page"));
 const PredictionPage = lazyImportPage(() => import("./pages/prediction/page"));
 
@@ -55,6 +59,7 @@ const AffiliatePage = lazyImportPage(
 );
 
 export const baseRoutes: RouteObject[] = [
+  { path: "announcement/:slug?", element: <AnnouncementPage /> },
   {
     path: "perp",
     children: [

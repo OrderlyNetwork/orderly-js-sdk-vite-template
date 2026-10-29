@@ -14,13 +14,19 @@ function loadSource(file, mocks = {}) {
     {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
+        esModuleInterop: true,
         jsx: ts.JsxEmit.ReactJSX,
       },
     },
   ).outputText;
   const exports = {};
   new Function("require", "exports", output)((name) => {
-    if (Object.hasOwn(mocks, name)) return mocks[name];
+    if (Object.hasOwn(mocks, name)) {
+      const value = mocks[name];
+      return Object.hasOwn(value, "default")
+        ? { ...value, __esModule: true }
+        : value;
+    }
     return require(name);
   }, exports);
   return exports;
@@ -189,10 +195,16 @@ test("all Perps entry redirects read current location and preference at render t
     "./navigationPaths": navigationPaths,
   });
   const tree = routerModule.createAppRouter();
+  assert.equal(
+    routerModule.baseRoutes.filter(
+      (route) => route.path === "announcement/:slug?",
+    ).length,
+    1,
+  );
   const redirects = [
     tree[0].children[0],
     tree[0].children[1].children[0],
-    routerModule.baseRoutes[0].children[0],
+    routerModule.baseRoutes.find((route) => route.path === "perp").children[0],
   ];
   for (const route of redirects) {
     let result = route.element.type();
@@ -486,4 +498,165 @@ test("legacy migration does not rewrite unrelated path segments", () => {
     navigationPaths.migratePredictionPath("/prediction/BTC%2F5M%25?x=1#orders"),
     "/predict/BTC%2F5M%25?x=1#orders",
   );
+});
+
+for (const [href, destination] of [
+  ["/announcement", "/announcement"],
+  ["/announcement?page=2", "/announcement?page=2"],
+  ["/announcement?category=listing", "/announcement?category=listing"],
+  [
+    "/announcement/release%20notes?is_official=true#details",
+    "/announcement/release%20notes?is_official=true#details",
+  ],
+  [
+    "/announcement/123?is_official=false",
+    "/announcement/123?is_official=false",
+  ],
+  ["/announcement#section?details", "/announcement#section?details"],
+]) {
+  test(`announcement navigation replaces stale filters and suffixes: ${href}`, () => {
+    global.window.location.search =
+      "?category=campaign&source=platform&page=5&is_official=true";
+    navigate({
+      href,
+      name: "announcement",
+      scope: "announcement",
+      replace: true,
+    });
+    assert.deepEqual(navigations, [
+      { href: `/zh${destination}`, replace: true },
+    ]);
+  });
+}
+
+test("announcement navigation preserves an explicit destination locale", () => {
+  navigate({
+    href: "/en/announcement/123?is_official=true",
+    name: "announcement",
+    scope: "announcement",
+  });
+  assert.equal(navigations[0].href, "/en/announcement/123?is_official=true");
+});
+
+test("announcement external links bypass the host router", () => {
+  navigate({
+    href: "https://example.com/article?is_official=true#details",
+    name: "announcement",
+    scope: "announcement",
+    target: "_blank",
+  });
+  assert.equal(navigations.length, 0);
+  assert.deepEqual(opened, [
+    [
+      "https://example.com/article?is_official=true#details",
+      "_blank",
+      "noopener,noreferrer",
+    ],
+  ]);
+});
+
+test("Vite announcement route passes absent, numeric and text slugs unchanged", () => {
+  for (const slug of [undefined, "123", "release-notes", "中文公告"]) {
+    const Page = loadSource("src/pages/announcement/page.tsx", {
+      "../../hooks/useAnnouncementLayout": {
+        useAnnouncementLayout: () => ({}),
+      },
+      "react-router": { useParams: () => ({ slug }) },
+      "@orderly.network/ui-notification": {
+        AnnouncementCenterPage: () => null,
+      },
+      "../../components/layout": { BaseLayout: () => null },
+      "../../constant": constants,
+    }).default;
+    assert.equal(Page().props.initialMenu, "/announcement");
+    assert.deepEqual(Page().props.children.props, { slug });
+  }
+});
+
+function loadAnnouncementLayout({ slug, mobile = true } = {}) {
+  const Box = () => null;
+  return loadSource("src/hooks/useAnnouncementLayout.tsx", {
+    "react-router": {
+      useParams: () => ({ slug }),
+      useLocation: () => global.window.location,
+      useSearchParams: () => new URLSearchParams(global.window.location.search),
+    },
+    "@orderly.network/i18n": {
+      useTranslation: () => ({
+        t: (key) => key,
+      }),
+    },
+    "@orderly.network/react-app": {
+      useAppContext: () => ({ onRouteChange: navigate }),
+    },
+    "@orderly.network/ui": {
+      Flex: Box,
+      Text: Box,
+      ChevronLeftIcon: Box,
+      useScreen: () => ({ isMobile: mobile }),
+    },
+    "../constant": constants,
+  }).useAnnouncementLayout();
+}
+
+test("mobile announcement back button uses logical start and the CSS RTL variant", () => {
+  const { topBar, classNames } = loadAnnouncementLayout({
+    slug: "123",
+  });
+  const button = topBar.props.children[0];
+  assert.equal(button.props["aria-label"], undefined);
+  assert.equal(button.props.title, undefined);
+  assert.ok(button.props.className.includes("oui-start-4"));
+  assert.equal(button.props.children.props.className, "rtl:oui-rotate-180");
+  assert.equal(button.props.children.props.style, undefined);
+  assert.ok(classNames.content.includes("oui-announcement-center"));
+});
+
+test("desktop announcements keep the SDK header without the mobile return bar", () => {
+  const props = loadAnnouncementLayout({ mobile: false });
+  assert.equal(props.topBar, undefined);
+  assert.equal(props.classNames.content, undefined);
+});
+
+for (const slug of ["release-notes", "123"]) {
+  test(`mobile detail ${slug} returns to list, retaining context and removing article source/hash`, () => {
+    global.window.location.search =
+      "?brokerId=demo&networkId=testnet&category=listing&source=official&page=2&is_official=true&feature=one&feature=two";
+    const props = loadAnnouncementLayout({ slug });
+    props.topBar.props.children[0].props.onClick();
+    assert.deepEqual(navigations, [
+      {
+        href: "/zh/announcement?brokerId=demo&networkId=testnet&category=listing&source=official&page=2&feature=one&feature=two",
+        replace: undefined,
+      },
+    ]);
+  });
+}
+
+test("mobile list returns to the remembered Perps symbol and removes announcement filters", () => {
+  global.window.location.search =
+    "?brokerId=demo&networkId=testnet&category=listing&source=community&page=2&is_official=false&feature=one&feature=two";
+  const props = loadAnnouncementLayout();
+  const button = props.topBar.props.children[0];
+  assert.equal(button.props["aria-label"], undefined);
+  assert.equal(button.props.title, undefined);
+  button.props.onClick();
+  assert.deepEqual(navigations, [
+    {
+      href: "/zh/perp/PERP_ETH_USDC?brokerId=demo&networkId=testnet&feature=one&feature=two",
+      replace: undefined,
+    },
+  ]);
+});
+
+test("mobile returns without context clear inherited query and hash", () => {
+  global.window.location.search = "?is_official=true";
+  loadAnnouncementLayout({
+    slug: "123",
+  }).topBar.props.children[0].props.onClick();
+  assert.equal(navigations[0].href, "/zh/announcement");
+  global.window.location.search =
+    "?category=listing&source=official&page=2&is_official=true";
+  loadAnnouncementLayout().topBar.props.children[0].props.onClick();
+  assert.equal(navigations[1].href, "/zh/perp/PERP_ETH_USDC");
 });

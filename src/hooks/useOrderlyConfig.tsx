@@ -6,6 +6,7 @@ import {
   AffiliateIcon,
   AssetIcon,
   BarChartIcon,
+  BellIcon,
   EarnIcon,
   LeaderboardActiveIcon,
   LeaderboardInactiveIcon,
@@ -156,6 +157,13 @@ export const useOrderlyConfig = () => {
                 name: t("tradingLeaderboard.leaderboard"),
                 href: PathEnum.Leaderboard,
                 icon: <LeaderboardInactiveIcon />,
+              },
+              {
+                name: t("notification.announcements"),
+                href: PathEnum.Announcement,
+                icon: (
+                  <BellIcon color="inherit" opacity={0.8} viewBox="0 0 20 20" />
+                ),
               },
               {
                 name: t("common.assets"),

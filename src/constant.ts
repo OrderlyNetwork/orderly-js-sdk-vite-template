@@ -1,7 +1,10 @@
+import enLocale from "@orderly.network/i18n/locales/en.json";
+
 export enum PathEnum {
   Root = "/",
   Perp = "/perp",
   Prediction = "/predict",
+  Announcement = "/announcement",
 
   Portfolio = "/portfolio",
   Positions = "/portfolio/positions",
@@ -21,6 +24,7 @@ export enum PathEnum {
 }
 
 export const PageTitleMap = {
+  [PathEnum.Announcement]: enLocale["notification.centerTitle"],
   [PathEnum.Prediction]: "Predict",
   [PathEnum.Portfolio]: "Portfolio",
   [PathEnum.FeeTier]: "Fee tier",
